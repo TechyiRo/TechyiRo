@@ -61,6 +61,7 @@
                             <th>Product Name</th>
                             <th>Serial Number</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -70,6 +71,7 @@
                             <td>{{ item.product_name }}</td>
                             <td>{{ item.serial_number }}</td>
                             <td>{{ item.Inventory.status }}</td>
+                            <td> <button onclick="deleteinventory({{ inventory.id }})" class="btn btn-sm btn-glass">🗑️ Delete</button> </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -81,6 +83,18 @@
         function deleteProduct(id) {
             if (confirm('Are you sure you want to delete this product?')) {
                 fetch(`/delete_product/${id}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        location.reload();
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+        }
+
+        function deleteinventory(id) {
+            if (confirm('Are you sure you want to delete this inventory?')) {
+                fetch(`/delete_inventory/${id}`, { method: 'POST' })
                     .then(response => response.json())
                     .then(data => {
                         alert(data.message);

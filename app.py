@@ -36,6 +36,18 @@ class Inventory(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     status = db.Column(db.String(10), nullable=False)  # 'RENT' or 'SELL'
 
+class WorkDetails(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    eng_name = db.Column(db.String(100), nullable=False)
+    work_type = db.Column(db.String(50), nullable=False)
+    work_details = db.Column(db.Text, nullable=False)
+    contact_no = db.Column(db.String(20), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    work_status = db.Column(db.String(20), nullable=False)
+    company = db.relationship('Company', backref='work_details')
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -281,6 +293,52 @@ def chart_data():
         else:
             data[month_year] = 1
     return jsonify(list(data.items()))
+
+@app.route('/work_details', methods=['GET', 'POST'])
+@login_required
+def work_details():
+    if request.method == 'POST':
+        try:
+            new_work = WorkDetails(
+                date=datetime.strptime(request.form['date'], '%Y-%m-%d').date(),
+                company_id=request.form['company'],
+                eng_name=request.form['eng_name'],
+                work_type=request.form['work_type'],
+                work_details=request.form['work_details'],
+                contact_no=request.form['contact_no'],
+                email=request.form['email'],
+                work_status=request.form['work_status']
+            )
+            db.session.add(new_work)
+            db.session.commit()
+            return jsonify({"message": "Work details added successfully!"})
+        except Exception as e:
+            app.logger.error(f"Error adding work details: {e}")
+            return jsonify({"error": str(e)}), 500
+    companies = Company.query.all()
+    return render_template('work_details.html', companies=companies)
+
+@app.route('/show_work_data')
+@login_required
+def show_work_data():
+    work_data = db.session.query(WorkDetails).join(Company).order_by(desc(WorkDetails.date)).all()
+    return render_template('show_work_data.html', work_data=work_data)
+
+@app.route('/update_work_status/<int:id>', methods=['POST'])
+@login_required
+def update_work_status(id):
+    work = WorkDetails.query.get_or_404(id)
+    work.work_status = request.form['status']
+    db.session.commit()
+    return jsonify({"message": "Work status updated successfully!"})
+
+@app.route('/delete_work/<int:id>', methods=['POST'])
+@login_required
+def delete_work(id):
+    work = WorkDetails.query.get_or_404(id)
+    db.session.delete(work)
+    db.session.commit()
+    return jsonify({"message": "Work details deleted successfully!"})
 
 if __name__ == '__main__':
     with app.app_context():

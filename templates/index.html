@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <a href="{{ url_for('logout') }}" class="btn btn-glass logout-button">🚪 Logout</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-glass btn m-1">🚪 Logout</a>
     <div class="container mt-5">
         <div class="glass-container animated">
             <h1 class="text-center mb-4">🏢 SP IT CLIENT DETAILS 🖥️</h1>
@@ -42,6 +42,10 @@
                     </div>
                 </div>
             </div>
+             <div class="dashboard-card mt-4">
+            <a href="{{ url_for('work_details') }}" class="btn btn-primary mb-3 me-2">WORK DETAILS</a>
+            <a href="{{ url_for('show_work_data') }}" class="btn btn-primary mb-3">SHOW WORK DATA</a>
+        </div>
             <div class="row mt-4">
                 <div class="col-md-6">
                     <h3>🌟 Recent Activities</h3>
