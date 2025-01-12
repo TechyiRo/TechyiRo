@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product and Inventory Data</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('serve_static', filename='styles.css') }}" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/vfs_fonts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+</head>
+<body>
+    <a href="{{ url_for('index') }}" class="btn btn-glass back-button">🏠 Back to Home</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-glass logout-button">🚪 Logout</a>
+    <div class="container mt-5">
+        <div class="glass-container animated">
+            <h1 class="text-center mb-4">📊 Product and Inventory Data</h1>
+            
+            <h2 class="text-center mb-3">🏷️ Product Data</h2>
+            <div class="mb-3">
+                <button onclick="exportToPDF('products')" class="btn btn-glass">📄 Export Products to PDF</button>
+                <button onclick="exportToExcel('products')" class="btn btn-glass">📊 Export Products to Excel</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-glass" id="productsTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product Name</th>
+                            <th>Serial Number</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ product.date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.serial_number }}</td>
+                            <td>
+                                <a href="{{ url_for('edit_product', id=product.id) }}" class="btn btn-sm btn-glass">✏️ Edit</a>
+                                <button onclick="deleteProduct({{ product.id }})" class="btn btn-sm btn-glass">🗑️ Delete</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="text-center mb-3 mt-5">📦 Inventory Data</h2>
+            <div class="mb-3">
+                <button onclick="exportToPDF('inventory')" class="btn btn-glass">📄 Export Inventory to PDF</button>
+                <button onclick="exportToExcel('inventory')" class="btn btn-glass">📊 Export Inventory to Excel</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-glass" id="inventoryTable">
+                    <thead>
+                        <tr>
+                            <th>Company Name</th>
+                            <th>Product Name</th>
+                            <th>Serial Number</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in inventory %}
+                        <tr>
+                            <td>{{ item.company_name }}</td>
+                            <td>{{ item.product_name }}</td>
+                            <td>{{ item.serial_number }}</td>
+                            <td>{{ item.Inventory.status }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        function deleteProduct(id) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                fetch(`/delete_product/${id}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        location.reload();
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+        }
+
+        function exportToPDF(type) {
+            const table = document.getElementById(type === 'products' ? 'productsTable' : 'inventoryTable');
+            const data = Array.from(table.querySelectorAll('tbody tr')).map(row => {
+                return Array.from(row.querySelectorAll('td')).map(cell => cell.textContent);
+            });
+
+            const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent);
+
+            const docDefinition = {
+                content: [
+                    { text: type === 'products' ? 'Product Data' : 'Inventory Data', style: 'header' },
+                    {
+                        table: {
+                            headerRows: 1,
+                            body: [
+                                headers,
+                                ...data
+                            ]
+                        }
+                    }
+                ],
+                styles: {
+                    header: {
+                        fontSize: 18,
+                        bold: true,
+                        margin: [0, 0, 0, 10]
+                    }
+                }
+            };
+
+            pdfMake.createPdf(docDefinition).download(`${type}_data.pdf`);
+        }
+
+        function exportToExcel(type) {
+            const table = document.getElementById(type === 'products' ? 'productsTable' : 'inventoryTable');
+            const data = Array.from(table.querySelectorAll('tbody tr')).map(row => {
+                const cells = row.querySelectorAll('td');
+                const obj = {};
+                Array.from(table.querySelectorAll('thead th')).forEach((th, index) => {
+                    obj[th.textContent] = cells[index].textContent;
+                });
+                return obj;
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, type === 'products' ? 'Products' : 'Inventory');
+            XLSX.writeFile(workbook, `${type}_data.xlsx`);
+        }
+    </script>
+</body>
+</html>
+

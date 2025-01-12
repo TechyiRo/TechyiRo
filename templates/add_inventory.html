@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Inventory</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('serve_static', filename='styles.css') }}" rel="stylesheet">
+</head>
+<body>
+    <a href="{{ url_for('index') }}" class="btn btn-glass back-button">🏠 Back to Home</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-glass logout-button">🚪 Logout</a>
+    <div class="container mt-5">
+        <div class="glass-container animated">
+            <h1 class="text-center mb-4">📦 Add Inventory</h1>
+            <form id="addInventoryForm">
+                <div class="mb-3">
+                    <label for="company_id" class="form-label">🏢 Select Company</label>
+                    <select class="form-select btn-glass" id="company_id" name="company_id" required>
+                        <option value="">Choose...</option>
+                        {% for company in companies %}
+                        <option value="{{ company.id }}">{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="product_id" class="form-label">🏷️ Select Product</label>
+                    <select class="form-select btn-glass" id="product_id" name="product_id" required>
+                        <option value="">Choose...</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}">{{ product.name }} (SN: {{ product.serial_number }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="status" class="form-label">📊 Status</label>
+                    <select class="form-select btn-glass" id="status" name="status" required>
+                        <option value="">Choose...</option>
+                        <option value="RENT">RENT</option>
+                        <option value="SELL">SELL</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-glass">Submit</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.getElementById('addInventoryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            fetch('/add_inventory', {
+                method: 'POST',
+                body: new FormData(this)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                this.reset();
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
+
